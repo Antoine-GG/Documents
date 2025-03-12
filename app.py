@@ -1,12 +1,23 @@
 from flask import Flask, render_template, request, jsonify
-
-#GPIO
 import RPi.GPIO as GPIO
-GPIO_PIN_LED = 27
-GPIO_PIN_BUTTON = 17
+import time
+
+#Moteurs
+GPIO_PIN_VIT_GAUCHE = 27
+GPIO_PIN_VIT_DROITE = 23
+GPIO_PIN_DIR_GAUCHE = 17
+GPIO_PIN_DIR_DROITE = 22
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(GPIO_PIN_LED, GPIO.OUT)
-GPIO.setup(GPIO_PIN_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(GPIO_PIN_VIT_GAUCHE, GPIO.OUT)
+GPIO.setup(GPIO_PIN_VIT_DROITE, GPIO.OUT)
+GPIO.setup(GPIO_PIN_DIR_GAUCHE, GPIO.OUT)
+GPIO.setup(GPIO_PIN_DIR_DROITE, GPIO.OUT)
+
+def stop():
+    GPIO.output(GPIO_PIN_VIT_GAUCHE, GPIO.LOW)
+    GPIO.output(GPIO_PIN_VIT_DROITE, GPIO.LOW)
+    GPIO.output(GPIO_PIN_DIR_GAUCHE, GPIO.LOW)
+    GPIO.output(GPIO_PIN_DIR_DROITE, GPIO.LOW)
 
 #Flask
 app = Flask(__name__)
@@ -16,21 +27,73 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
  
- #Flask allumer eteindre DEL
-@app.route('/del', methods=['POST'])
-def allumer_eteindre_del():
-        isLed1On = request.json['isLed1On']
-        if isLed1On:
-            GPIO.output(GPIO_PIN_LED, GPIO.HIGH)
-        else:
-            GPIO.output(GPIO_PIN_LED, GPIO.LOW)
-        return jsonify({'message': 'LED state updated successfully'})
+#Flask test les IO
+@app.route('/io', methods=['POST'])
+def io():
+    print(request.json)
+    isVitGauche = request.json['isVitGauche']
+    isVitDroite = request.json['isVitDroite']
+    isDirDroite = request.json['isDirDroite']
+    isDirGauche = request.json['isDirGauche']
+    if isVitGauche:
+        GPIO.output(GPIO_PIN_VIT_GAUCHE, GPIO.HIGH)
+    elif isVitDroite:
+        GPIO.output(GPIO_PIN_VIT_DROITE, GPIO.HIGH)
+    elif isDirGauche:
+        GPIO.output(GPIO_PIN_DIR_GAUCHE, GPIO.HIGH)
+    elif isDirDroite:
+        GPIO.output(GPIO_PIN_DIR_DROITE, GPIO.HIGH)
+    else:
+        print('ERREUR!')
+        return jsonify({'message': 'Erreur dans la commande des IO!'})
+    print('1 sec...')
+    time.sleep(1)
+    print('On arrete...')
+    stop()
+    print('Fini!')
+    return jsonify({'message': 'IO controlé!'})
 
-#Flask lire bouton
-@app.route('/bouton', methods=['GET'])
-def lire_bouton():
-    isButton1On = True if GPIO.input(GPIO_PIN_BUTTON) else False
-    return jsonify({'isButton1On': isButton1On})
+#Flask controle moteurs
+@app.route('/moteurs', methods=['POST'])
+def moteurs():
+    print(request.json)
+    isLeftPressed = request.json['isLeftPressed']
+    isRightPressed = request.json['isRightPressed']
+    isForwardPressed = request.json['isForwardPressed']
+    isReversePressed = request.json['isReversePressed']
+    if isLeftPressed:
+        print('Gauche!')
+        GPIO.output(GPIO_PIN_VIT_GAUCHE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_VIT_DROITE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_DIR_GAUCHE, GPIO.LOW)
+        GPIO.output(GPIO_PIN_DIR_DROITE, GPIO.LOW)
+    elif isRightPressed:
+        print('Droite!')
+        GPIO.output(GPIO_PIN_VIT_GAUCHE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_VIT_DROITE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_DIR_GAUCHE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_DIR_DROITE, GPIO.HIGH)
+    elif isForwardPressed:
+        print('En avant!')
+        GPIO.output(GPIO_PIN_VIT_GAUCHE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_VIT_DROITE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_DIR_GAUCHE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_DIR_DROITE, GPIO.LOW)
+    elif isReversePressed:
+        print('En arriere!')
+        GPIO.output(GPIO_PIN_VIT_GAUCHE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_VIT_DROITE, GPIO.HIGH)
+        GPIO.output(GPIO_PIN_DIR_GAUCHE, GPIO.LOW)
+        GPIO.output(GPIO_PIN_DIR_DROITE, GPIO.HIGH)
+    else:
+        print('ERREUR!')
+        return jsonify({'message': 'Erreur dans la commande du moteur!'})
+    print('1 sec...')
+    time.sleep(1)
+    print('On arrete...')
+    stop()
+    print('Fini!')
+    return jsonify({'message': 'Moteurs controlé!'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
