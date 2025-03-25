@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Robot rond</title>
+        <style>
+            .container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 50vh;
+                font-size: 2em;
+            }
+            .row {
+                display: flex;
+            }
+            .button {
+                padding: 10px 20px;
+                margin: 5px;
+                cursor: pointer;
+                border: 1px solid #ccc;
+                background-color: #f0f0f0;
+                font-size: 1em;
+                text-align: center;
+            }
+        </style>
+        <script>
+            function sendCommand(command) {
+                fetch('/control/' + command)
+                    .then(response => response.text())
+                    .then(data => console.log(data))
+                    .catch(error => console.error('Error:', error));
+            }
+        </script>
+    </head>
+    <body>
+
+        <!-- UI -->
+        <p id='debugTxtId'>...</p>
+        <div class="container">
+            <div class="row">
+                <div class="button" onclick="onClickAvancer()">⬆️</div>
+            </div>
+            <div class="row">
+                <div class="button" onclick="onClickGauche()">⬅️</div>
+                <div class="button" onclick="onClickStop()">🛑</div>
+                <div class="button" onclick="onClickDroite()">➡️</div>
+            </div>
+            <div class="row">
+                <div class="button" onclick="onClickReculer()">⬇️</div>
+            </div>
+        </div>
+        
+        <!-- Javascript -->
+        <script>    
+
+            class Moteurs {
+                constructor(dirGauche, vitGauche, dirDroite, vitDroite) {
+                    this.isDirGauche=dirGauche;
+                    this.isVitGauche=vitGauche;
+                    this.isDirDroite=dirDroite;
+                    this.isVitDroite=vitDroite;
+                }              
+            }
+
+            function onClickAvancer() {
+                let moteurs = new Moteurs(true, true, true, true);
+                postMoteurs(moteurs);
+            }
+
+            function onClickReculer() {
+                let moteurs = new Moteurs(false, true, false, true);
+                postMoteurs(moteurs);
+            }
+
+            function onClickGauche() {
+                let moteurs = new Moteurs(false, true, true, true);
+                postMoteurs(moteurs);
+            }
+
+            function onClickDroite() {
+                let moteurs = new Moteurs(true, true, false, true);
+                postMoteurs(moteurs);
+            }
+
+            function onClickStop() {
+                let moteurs = new Moteurs(false, false, false, false);
+                postMoteurs(moteurs);
+            }
+
+            function postMoteurs(moteurs){
+                const url = 'http://192.168.4.118:5000/io';
+                post(url, moteurs);
+            }
+            
+            function onClickGetIrs(){
+                const url = 'http://192.168.4.118:5000/irs';
+                get(url, function(json) {
+                    //Convertir le string JSON en objet JSON
+                    const data = JSON.parse(json);
+
+                    //Imprimer dans le UI
+                    document.getElementById('debugTxtId').innerHTML = data;
+                })
+            }
+
+            function post(url, data) {
+                //Préparer la requête POST
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', url);
+
+                //Envoyer avec JSON dans le body
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                const json = JSON.stringify(data)
+                xhr.send(json);
+
+                //Écrire sur le UI pour aider au dépannage
+                document.getElementById('debugTxtId').innerHTML = 'Envoyé: ' + json;
+            }
+            
+            function get(url, callback){
+                //Préparer le URL
+                const requestURL = 'http://192.168.5.118:5000/moteurs';
+                const xhr = new XMLHttpRequest();                
+                xhr.open('GET', requestURL);
+                
+                //Réponse de flask
+                xhr.onload = function() {
+                    //Succès
+                    if (xhr.status === 200) {
+                        //JSON string reçu
+                        const json = xhr.responseText;
+                        callback(json);
+
+                        //Écrire sur le UI pour aider au dépannage
+                        document.getElementById('debugTxtId').innerHTML = 'Reçu: ' + json;
+                    } 
+                    //Échec
+                    else {
+                        //Écrire sur le UI pour aider au dépannage
+                        document.getElementById('debugTxtId').innerHTML = 'Échec! Code: ' + xhr.status;
+                    }
+                };
+
+                //Envoyer à flask
+                xhr.send();
+            }
+        </script>
+        
+    </body>
+
+</html>
