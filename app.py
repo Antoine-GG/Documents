@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 import RPi.GPIO as GPIO
 import time
 import cv2
@@ -24,6 +25,7 @@ def stop():
 
 #Flask
 app = Flask(__name__)
+CORS(app)
 
 #Flask page d'accueil
 @app.route('/')
@@ -131,6 +133,12 @@ def moteurs():
     stop()
     print('Fini!')
     return jsonify({'message': 'Moteurs controlé!'})
+
+#Start/stop opencv
+@app.route('/opencv', methods=['POST'])
+def opencv():
+    print(request.json)
+    return jsonify({'message': 'opencv controlé!'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
