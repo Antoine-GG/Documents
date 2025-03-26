@@ -40,23 +40,11 @@ def io():
     isVitDroite = request.json['isVitDroite']
     isDirDroite = request.json['isDirDroite']
     isDirGauche = request.json['isDirGauche']
-    if isVitGauche:
-        GPIO.output(GPIO_PIN_VIT_GAUCHE, GPIO.HIGH)
-    elif isVitDroite:
-        GPIO.output(GPIO_PIN_VIT_DROITE, GPIO.HIGH)
-    elif isDirGauche:
-        GPIO.output(GPIO_PIN_DIR_GAUCHE, GPIO.HIGH)
-    elif isDirDroite:
-        GPIO.output(GPIO_PIN_DIR_DROITE, GPIO.HIGH)
-    else:
-        print('ERREUR!')
-        return jsonify({'message': 'Erreur dans la commande des IO!'})
-    print('1 sec...')
-    time.sleep(1)
-    print('On arrete...')
-    stop()
-    print('Fini!')
-    return jsonify({'message': 'IO controlé!'})
+    GPIO.output(GPIO_PIN_VIT_GAUCHE, isVitGauche)
+    GPIO.output(GPIO_PIN_VIT_DROITE, isVitDroite)
+    GPIO.output(GPIO_PIN_DIR_GAUCHE, isDirGauche)
+    GPIO.output(GPIO_PIN_DIR_DROITE, isDirDroite)
+    return jsonify({'message': 'IO controlés!'})
 
 def gauche():
     print('Gauche!')
@@ -127,12 +115,8 @@ def moteurs():
     elif isReversePressed:
         enArriere()
     else:
-        print('ERREUR!')
-        return jsonify({'message': 'Erreur dans la commande du moteur!'})
-    print('On arrete...')
-    stop()
-    print('Fini!')
-    return jsonify({'message': 'Moteurs controlé!'})
+        stop()
+    return jsonify({'message': 'Moteurs controlés!'})
 
 #Start/stop opencv
 @app.route('/opencv', methods=['POST'])
@@ -141,4 +125,5 @@ def opencv():
     return jsonify({'message': 'opencv controlé!'})
 
 if __name__ == '__main__':
+    stop()
     app.run(host='0.0.0.0')
