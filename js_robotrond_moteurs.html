@@ -8,7 +8,7 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                height: 50vh;
+                height: 25vh;
                 font-size: 2em;
             }
             .row {
@@ -23,6 +23,54 @@
                 font-size: 1em;
                 text-align: center;
             }
+            .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            }
+
+            .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            }
+
+            .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+            }
+
+            .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            }
+
+            input:checked + .slider {
+            background-color: #2196F3;
+            }
+
+            input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+            }
+
+            input:checked + .slider:before {
+            transform: translateX(26px);
+            }
         </style>
         <script>
             function sendCommand(command) {
@@ -36,7 +84,12 @@
     <body>
 
         <!-- UI -->
-        <p id='debugTxtId'>...</p>
+        <p id='debugTxtId'>...</p></br>
+        <p>OpenCV:</p>
+        <label class="switch">
+            <input type="checkbox" id="openCvSwitch" onchange="onToggleOpenCv()">
+            <span class="slider"></span>
+        </label>
         <div class="container">
             <div class="row">
                 <div class="button" onclick="onClickAvancer()">⬆️</div>
@@ -50,16 +103,45 @@
                 <div class="button" onclick="onClickReculer()">⬇️</div>
             </div>
         </div>
+        <p>Direction gauche:</p>
+        <label class="switch">
+            <input type="checkbox" id="dirGaucheSwitch" onchange="onToggleIO()">
+            <span class="slider"></span>
+        </label>
+        <p>Vitesse gauche:</p>
+        <label class="switch">
+            <input type="checkbox" id="vitGaucheSwitch" onchange="onToggleIO()">
+            <span class="slider"></span>
+        </label>
+        <p>Direction droite:</p>
+        <label class="switch">
+            <input type="checkbox" id="dirDroiteSwitch" onchange="onToggleIO()">
+            <span class="slider"></span>
+        </label>
+        <p>Vitesse droite:</p>
+        <label class="switch">
+            <input type="checkbox" id="vitDroiteSwitch" onchange="onToggleIO()">
+            <span class="slider"></span>
+        </label>
         
         <!-- Javascript -->
         <script>    
 
-            class Moteurs {
+            class IOs {
                 constructor(dirGauche, vitGauche, dirDroite, vitDroite) {
                     this.isDirGauche=dirGauche;
                     this.isVitGauche=vitGauche;
                     this.isDirDroite=dirDroite;
                     this.isVitDroite=vitDroite;
+                }              
+            }
+
+            class Moteurs {
+                constructor(isLeftPressed, isRightPressed, isForwardPressed, isReversePressed) {
+                    this.isLeftPressed=isLeftPressed;
+                    this.isRightPressed=isRightPressed;
+                    this.isForwardPressed=isForwardPressed;
+                    this.isReversePressed=isReversePressed;
                 }              
             }
 
@@ -89,7 +171,7 @@
             }
 
             function postMoteurs(moteurs){
-                const url = 'http://192.168.4.118:5000/io';
+                const url = 'http://192.168.4.118:5000/moteurs';
                 post(url, moteurs);
             }
             
@@ -144,6 +226,37 @@
 
                 //Envoyer à flask
                 xhr.send();
+            }
+
+            class OnOff {
+                constructor(isOn) {
+                    this.isOn=isOn;
+                }              
+            }
+
+            function onToggleOpenCv() {
+                const openCvSwitch = document.getElementById("openCvSwitch");
+                const url = 'http://192.168.4.118:5000/opencv';
+                if(openCvSwitch.checked){
+                    post(url, new OnOff(true));
+                } else {
+                    post(url, new OnOff(false));
+                }
+            }
+
+            function onToggleIO() {
+                const dirGaucheSwitch = document.getElementById("dirGaucheSwitch");
+                const vitGaucheSwitch = document.getElementById("vitGaucheSwitch");
+                const dirDroiteSwitch = document.getElementById("dirDroiteSwitch");
+                const vitDroiteSwitch = document.getElementById("vitDroiteSwitch");
+
+                const url = 'http://192.168.4.118:5000/io';
+                post(url, new IOs(
+                    dirGaucheSwitch.checked, 
+                    vitGaucheSwitch.checked,
+                    dirDroiteSwitch.checked,
+                    vitDroiteSwitch.checked,
+                ));
             }
         </script>
         
