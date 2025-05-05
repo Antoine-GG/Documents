@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 import RPi.GPIO as GPIO
 import time
 import cv2
@@ -25,7 +26,6 @@ def stop():
 
 #Flask
 app = Flask(__name__)
-from flask_cors import CORS
 CORS(app)
 
 #Flask page d'accueil
@@ -54,29 +54,15 @@ def trajectoire():
 @app.route('/io', methods=['POST'])
 def io():
     print(request.json)
-
-    moteur = Moteur(request.json['isVitGauche'], 
-                    request.json['isVitDroite'], 
-                    request.json['isDirDroite'], 
-                    request.json['isDirGauche'])
-
-    if moteur.isVitGauche:
-        GPIO.output(GPIO_PIN_VIT_GAUCHE, GPIO.HIGH)
-    elif moteur.isVitDroite:
-        GPIO.output(GPIO_PIN_VIT_DROITE, GPIO.HIGH)
-    elif moteur.isDirGauche:
-        GPIO.output(GPIO_PIN_DIR_GAUCHE, GPIO.HIGH)
-    elif moteur.isDirDroite:
-        GPIO.output(GPIO_PIN_DIR_DROITE, GPIO.HIGH)
-    else:
-        print('ERREUR!')
-        return jsonify({'message': 'Erreur dans la commande des IO!'})
-    print('1 sec...')
-    time.sleep(1)
-    print('On arrete...')
-    stop()
-    print('Fini!')
-    return jsonify({'message': 'IO controlé!'})
+    isVitGauche = request.json['isVitGauche']
+    isVitDroite = request.json['isVitDroite']
+    isDirDroite = request.json['isDirDroite']
+    isDirGauche = request.json['isDirGauche']
+    GPIO.output(GPIO_PIN_VIT_GAUCHE, isVitGauche)
+    GPIO.output(GPIO_PIN_VIT_DROITE, isVitDroite)
+    GPIO.output(GPIO_PIN_DIR_GAUCHE, isDirGauche)
+    GPIO.output(GPIO_PIN_DIR_DROITE, isDirDroite)
+    return jsonify({'message': 'IO controlés!'})
 
 def gauche():
     print('Gauche!')
@@ -147,12 +133,15 @@ def moteurs():
     elif isReversePressed:
         enArriere()
     else:
-        print('ERREUR!')
-        return jsonify({'message': 'Erreur dans la commande du moteur!'})
-    print('On arrete...')
-    stop()
-    print('Fini!')
-    return jsonify({'message': 'Moteurs controlé!'})
+        stop()
+    return jsonify({'message': 'Moteurs controlés!'})
+
+#Start/stop opencv
+@app.route('/opencv', methods=['POST'])
+def opencv():
+    print(request.json)
+    return jsonify({'message': 'opencv controlé!'})
 
 if __name__ == '__main__':
+    stop()
     app.run(host='0.0.0.0')
