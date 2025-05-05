@@ -146,22 +146,22 @@
             }
 
             function onClickAvancer() {
-                let moteurs = new Moteurs(true, true, true, true);
+                let moteurs = new Moteurs(false, false, true, false);
                 postMoteurs(moteurs);
             }
 
             function onClickReculer() {
-                let moteurs = new Moteurs(false, true, false, true);
+                let moteurs = new Moteurs(false, false, false, true);
                 postMoteurs(moteurs);
             }
 
             function onClickGauche() {
-                let moteurs = new Moteurs(false, true, true, true);
+                let moteurs = new Moteurs(true, false, false, false);
                 postMoteurs(moteurs);
             }
 
             function onClickDroite() {
-                let moteurs = new Moteurs(true, true, false, true);
+                let moteurs = new Moteurs(false, true, false, false);
                 postMoteurs(moteurs);
             }
 
@@ -171,12 +171,12 @@
             }
 
             function postMoteurs(moteurs){
-                const url = 'http://192.168.4.118:5000/moteurs';
+                const url = 'http://192.168.4.143:5000/moteurs';
                 post(url, moteurs);
             }
             
             function onClickGetIrs(){
-                const url = 'http://192.168.4.118:5000/irs';
+                const url = 'http://192.168.4.143:5000/irs';
                 get(url, function(json) {
                     //Convertir le string JSON en objet JSON
                     const data = JSON.parse(json);
@@ -202,7 +202,7 @@
             
             function get(url, callback){
                 //Préparer le URL
-                const requestURL = 'http://192.168.5.118:5000/moteurs';
+                const requestURL = 'http://192.168.5.143:5000/moteurs';
                 const xhr = new XMLHttpRequest();                
                 xhr.open('GET', requestURL);
                 
@@ -236,7 +236,7 @@
 
             function onToggleOpenCv() {
                 const openCvSwitch = document.getElementById("openCvSwitch");
-                const url = 'http://192.168.4.118:5000/opencv';
+                const url = 'http://192.168.4.143:5000/opencv';
                 if(openCvSwitch.checked){
                     post(url, new OnOff(true));
                 } else {
@@ -250,7 +250,7 @@
                 const dirDroiteSwitch = document.getElementById("dirDroiteSwitch");
                 const vitDroiteSwitch = document.getElementById("vitDroiteSwitch");
 
-                const url = 'http://192.168.4.118:5000/io';
+                const url = 'http://192.168.4.143:5000/io';
                 post(url, new IOs(
                     dirGaucheSwitch.checked, 
                     vitGaucheSwitch.checked,

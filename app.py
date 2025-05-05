@@ -4,6 +4,7 @@ import time
 import cv2
 import numpy as np
 import threading
+import sqlite3
 
 #Moteurs
 GPIO_PIN_VIT_GAUCHE = 27
@@ -24,27 +25,48 @@ def stop():
 
 #Flask
 app = Flask(__name__)
+from flask_cors import CORS
+CORS(app)
 
 #Flask page d'accueil
 @app.route('/')
 def index():
     return render_template('index.html')
  
+class Moteur:
+  def __init__(self, isVitGauche, isVitDroite, isDirDroite, isDirGauche):
+    self.isVitGauche = isVitGauche
+    self.isVitDroite = isVitDroite
+    self.isDirDroite = isDirDroite
+    self.isDirGauche = isDirGauche
+
+@app.route('/trajectoire', methods=['POST'])
+def trajectoire():
+    connection = sqlite3.connect('robot.db')
+    cursor = connection.cursor()
+    cursor.execute("CREATE TABLE IF NOT EXISTS trajectoire ( id INTEGER PRIMARY KEY, dirG REAL, vitG REAL, dirD REAL, vitD REAL )")
+    trajectoire = request.json['trajectoire']
+    for moteur in trajectoire:
+        cursor.execute("INSERT INTO trajectoire (id, dirG, vitG, dirD, vitD) VALUES (?, ?, ?, ?, ?)", (moteur.isDirGauche, moteur.isVitGauche, moteur.isDirDroite, moteur.isVitDroite))
+    connection.commit()
+
 #Flask test les IO
 @app.route('/io', methods=['POST'])
 def io():
     print(request.json)
-    isVitGauche = request.json['isVitGauche']
-    isVitDroite = request.json['isVitDroite']
-    isDirDroite = request.json['isDirDroite']
-    isDirGauche = request.json['isDirGauche']
-    if isVitGauche:
+
+    moteur = Moteur(request.json['isVitGauche'], 
+                    request.json['isVitDroite'], 
+                    request.json['isDirDroite'], 
+                    request.json['isDirGauche'])
+
+    if moteur.isVitGauche:
         GPIO.output(GPIO_PIN_VIT_GAUCHE, GPIO.HIGH)
-    elif isVitDroite:
+    elif moteur.isVitDroite:
         GPIO.output(GPIO_PIN_VIT_DROITE, GPIO.HIGH)
-    elif isDirGauche:
+    elif moteur.isDirGauche:
         GPIO.output(GPIO_PIN_DIR_GAUCHE, GPIO.HIGH)
-    elif isDirDroite:
+    elif moteur.isDirDroite:
         GPIO.output(GPIO_PIN_DIR_DROITE, GPIO.HIGH)
     else:
         print('ERREUR!')
